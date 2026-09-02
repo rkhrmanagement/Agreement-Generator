@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agreement Generator - RK HR Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Calibri:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #1a4b8c;
+      --border-color: #d1d5db;
+      --bg-gray: #f3f4f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    body {
+      background-color: #525659;
+      color: #000;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* APP SIDEBAR / FORM */
+    .sidebar {
+      width: 420px;
+      min-width: 380px;
+      background: #ffffff;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+
+    .sidebar-header {
+      padding: 16px 20px;
+      background: #0f2b48;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .sidebar-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .form-container {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .form-section {
+      background: var(--bg-gray);
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .form-section h3 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #1f2937;
+      margin-bottom: 10px;
+      font-weight: 700;
+      border-bottom: 1px solid #d1d5db;
+      padding-bottom: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #4b5563;
+      margin-bottom: 4px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+
+    .form-control:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 55px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .col {
+      flex: 1;
+    }
+
+    .actions {
+      padding: 16px 20px;
+      background: #fff;
+      border-top: 1px solid var(--border-color);
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #0284c7;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #0369a1;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    /* PREVIEW CONTAINER */
+    .preview-wrapper {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+
+    /* EXACT A4 PAGE SETUP */
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      height: 297mm;
+      background-color: #ffffff;
+      background-image: url('image001.jpg');
+      background-size: 210mm 297mm;
+      background-repeat: no-repeat;
+      background-position: center top;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      position: relative;
+      padding: 32mm 18mm 25mm 18mm; /* Margins clear header/footer */
+      color: #000;
+      font-size: 9.8pt;
+      line-height: 1.25;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    /* DOCUMENT TYPOGRAPHY */
+    .doc-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 10pt;
+    }
+
+    .doc-title-box {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .doc-title-box h3 {
+      font-size: 10.5pt;
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 2px;
+    }
+
+    .parties-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+      font-size: 9.5pt;
+    }
+
+    .parties-table td {
+      vertical-align: top;
+      padding: 2px 0;
+    }
+
+    .parties-table .label {
+      font-weight: bold;
+      text-decoration: underline;
+      width: 18%;
+    }
+
+    .parties-table .details {
+      width: 82%;
+    }
+
+    .and-separator {
+      text-align: center;
+      font-weight: bold;
+      text-decoration: underline;
+      padding: 4px 0 !important;
+    }
+
+    .clause-text {
+      text-align: justify;
+      margin-bottom: 8px;
+      font-size: 9.3pt;
+      line-height: 1.28;
+    }
+
+    .section-title {
+      font-weight: bold;
+      text-decoration: underline;
+      font-size: 9.8pt;
+      margin-top: 6px;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .bullet-list {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 4px;
+    }
+
+    .bullet-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 4px;
+      text-align: justify;
+      font-size: 9.3pt;
+      line-height: 1.25;
+    }
+
+    .bullet-arrow {
+      margin-right: 6px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .sub-bullet-list {
+      list-style: none;
+      padding-left: 20px;
+      margin: 3px 0 3px 0;
+    }
+
+    .sub-bullet-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 3px;
+      text-align: justify;
+      font-size: 9pt;
+      line-height: 1.22;
+    }
+
+    .sub-bullet-circle {
+      margin-right: 6px;
+      font-size: 8pt;
+      flex-shrink: 0;
+    }
+
+    /* SIGNATURE BLOCK */
+    .sign-section {
+      margin-top: 10px;
+      font-size: 9.5pt;
+    }
+
+    .sign-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .sign-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stamp-container {
+      height: 70px;
+      position: relative;
+      margin-bottom: 4px;
+    }
+
+    .stamp-img {
+      height: 75px;
+      position: absolute;
+      left: 10px;
+      top: -5px;
+    }
+
+    .sign-line {
+      font-weight: bold;
+      margin-bottom: 2px;
+      font-size: 9.2pt;
+    }
+
+    .sign-meta {
+      font-size: 9.2pt;
+      margin-bottom: 1px;
+    }
+
+    /* PRINT STYLES - PIXEL PERFECT FOR BROWSER / PDF EXPORT */
+    @media print {
+      body {
+        background: transparent !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+
+      .sidebar {
+        display: none !important;
+      }
+
+      .preview-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+        gap: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+
+      .a4-page {
+        box-shadow: none !important;
+        margin: 0 !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT CONTROL PANEL / FORM -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>MOU Agreement Generator</h2>
+    </div>
+
+    <div class="form-container">
+      <div class="form-section">
+        <h3>1. Agreement Date</h3>
+        <div class="row">
+          <div class="col form-group">
+            <label>Date</label>
+            <input type="text" id="inp_effDate" class="form-control" value="02/Sep/2026" />
+          </div>
+          <div class="col form-group">
+            <label>Day of Week</label>
+            <input type="text" id="inp_effDay" class="form-control" value="Wednesday" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>2. Client Information</h3>
+        <div class="form-group">
+          <label>Client Company Name</label>
+          <input type="text" id="inp_clientName" class="form-control" value="INTERCERT INC" />
+        </div>
+        <div class="form-group">
+          <label>Client Registered Address</label>
+          <textarea id="inp_clientAddress" class="form-control">Floor 1, Umiya Emporium, Opp. Nexus Mall (Formerly Forum Mall), Hosur Road, Koramangala, Bengaluru – 560029, India</textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>3. Commercial Terms</h3>
+        <div class="row">
+          <div class="col form-group">
+            <label>Payment Terms</label>
+            <input type="text" id="inp_payDays" class="form-control" value="08 Days" />
+          </div>
+          <div class="col form-group">
+            <label>Replacement Period</label>
+            <input type="text" id="inp_repDays" class="form-control" value="90 (ninety) days" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Replacement Notice Window</label>
+          <input type="text" id="inp_noticeDays" class="form-control" value="08 Days" />
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>4. Signatories & Authorization</h3>
+        <div class="form-group">
+          <label>Client Authorized Signatory Name</label>
+          <input type="text" id="inp_clientRep" class="form-control" value="Mr. Prashant Kolambekar" />
+        </div>
+        <div class="row">
+          <div class="col form-group">
+            <label>Designation</label>
+            <input type="text" id="inp_clientDesig" class="form-control" value="Head of Sales" />
+          </div>
+          <div class="col form-group">
+            <label>Place</label>
+            <input type="text" id="inp_clientPlace" class="form-control" value="Bengaluru" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 8px;">
+          <label><input type="checkbox" id="inp_showStamp" checked /> Include Company Seal Stamp</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="resetDefaults()">Reset</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Print / Save PDF</button>
+    </div>
+  </div>
+
+  <!-- RIGHT DOCUMENT PREVIEW (3 A4 PAGES) -->
+  <div class="preview-wrapper">
+
+    <!-- PAGE 1 -->
+    <div class="a4-page" id="page-1">
+      <div class="doc-header-row">
+        <div><u>AGREEMENT</u></div>
+        <div>Made on <span class="out_effDate">02/Sep/2026</span> (i.e. <span class="out_effDay">Wednesday</span>) – “Effective Date”</div>
+      </div>
+
+      <div class="doc-title-box">
+        <h3>MEMORANDUM OF UNDERSTANDING (MOU)</h3>
+        <h3>BETWEEN</h3>
+      </div>
+
+      <table class="parties-table">
+        <tr>
+          <td class="label">COMPANY</td>
+          <td class="details">
+            <strong>RK HR Management Private Limited</strong><br>
+            A company incorporated in India located at E-208 & H-1010-1011, Titanium City Center, 100 Feet Anand Nagar Road, Near Sachin Towers, Satellite, Ahmedabad-380015, Gujarat<br>
+            (Hereinafter referred to as “<strong>Company</strong>”)
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2" class="and-separator">AND</td>
+        </tr>
+        <tr>
+          <td class="label">CLIENT</td>
+          <td class="details">
+            <strong class="out_clientName">INTERCERT INC</strong><br>
+            A company incorporated in India Located <span class="out_clientAddress">Floor 1, Umiya Emporium, Opp. Nexus Mall (Formerly Forum Mall), Hosur Road, Koramangala, Bengaluru – 560029, India</span><br>
+            Hereinafter referred to as “<strong>Client</strong>” of the other part, and together with “Company”, the “<strong>Parties</strong>,” and each of CLIENT and COMPANY, a “<strong>Party</strong>”)
+          </td>
+        </tr>
+      </table>
+
+      <div class="clause-text">
+        <strong>WHEREAS Company</strong> and <strong>Client</strong>, for their mutual benefit and according to a working relationship which has been or may be established, anticipate that <strong>Company</strong> may disclose to Client documents, components, parts, information, drawings, data, sketches, plans programs, specifications, techniques, processes, software, inventions, and other materials, both written and oral, of a secret, confidential or proprietary nature, including without limitation any information relating to marketing, finance, forecasts, invention, research, design or development of information system and any supportive or incidental subsystems, and any subject matter claimed in or disclosed by any patent application prepared or filed by or behalf of my Company, in any jurisdiction, and any amendments or supplements thereto (collectively, “<strong>Proprietary Information</strong>”); to cater manpower services & all HR Services to Client, and
+      </div>
+
+      <div class="clause-text">
+        <strong>WHEREAS</strong>, the <strong>Company</strong> desires to assure that the confidentiality of any Proprietary Information is maintained;
+      </div>
+
+      <div class="clause-text">
+        <strong>NOW, THEREFORE</strong>, in consideration of the foregoing premises, and the mutual covenants contained herein, Company and Client hereby agree as follows:
+      </div>
+
+      <div class="section-title">THE PARTIES FURTHER AGREE TO THE FOLLOWING TERMS AND CONDITIONS:</div>
+
+      <div class="section-title">1. PROFESSIONAL CHARGES:</div>
+
+      <ul class="bullet-list">
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>8.33% of per annum cost to the company (CTC) from the client offered to the selected candidate for Lower and Middle position (CTC up to 10.0 Lakh Per Annum).</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>10.00% of per annum cost to the company (CTC) from the client offered to the selected candidate for Senior & Middle / Very Senior Position (CTC between 10.01-50.0 Lakh Per Annum).</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>12.50% of per annum cost to the company (CTC) from the client offered to the selected candidate for a Very Senior Position / Top Management (CTC between 50.1 and above).</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>15.00% of per annum cost to the company (CTC) from the client offered to the selected candidate for International Recruitment.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>Taxes will be levied on the billing amount as per statutory requirements.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>CTC includes TDS, PF, ESIC, Professional Tax, Joining Bonus, Retention Bonus, Buy-Outs, ESOP, Variable Pay, Retirement & Other benefits.</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- PAGE 2 -->
+    <div class="a4-page" id="page-2">
+      <div class="section-title">2. INVOICE:</div>
+      <ul class="bullet-list">
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>An invoice will be raised once the absorbed candidate will report to the client’s organization.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>The client is required to provide the company, absorbed candidate’s joining details along with a copy of <strong>A.</strong> Offer Letter and/or Appointment Letter, <strong>B.</strong> Bond Copy / Service Agreement Copy, <strong>C.</strong> CTC Break Up</div>
+        </li>
+      </ul>
+
+      <div class="section-title">3. PAYMENT TERMS:</div>
+      <ul class="bullet-list">
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>The client has to disburse to the company for invoice payment within <strong><span class="out_payDays">08 Days</span></strong> from the date of the candidate’s reporting (joining) in the client’s organization.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>Payments must be made by Demand draft or Cheque or via NEFT or IMPS, in favor of <strong>RK HR Management Private Limited</strong> payable at Ahmedabad.</div>
+        </li>
+      </ul>
+
+      <div class="section-title">4. REPLACEMENT:</div>
+      <ul class="bullet-list">
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>Due to unforeseen reasons, if an absorbed candidate leaves the organization within <span class="out_repDays">90 (ninety) days</span> from the date of reporting (joining), Company stands to provide a one-time free replacement against that candidate.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>In the event of not being able to provide the replacement within the stipulated time, the payment received from the respective client will be adjusted against the charges for the placement of candidates for other positions only.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>Company shall not be liable to provide the replacement for an absorbed candidate in the following cases:</div>
+        </li>
+      </ul>
+
+      <ul class="sub-bullet-list">
+        <li class="sub-bullet-item">
+          <span class="sub-bullet-circle">o</span>
+          <div>If the client terminates the candidate within the guaranteed period then the company has to provide the replacement. However, the client will pay 50 % of the service charge for replacement <strong>except in case of misbehaviour, fraud or dishonesty.</strong></div>
+        </li>
+        <li class="sub-bullet-item">
+          <span class="sub-bullet-circle">o</span>
+          <div>If the client does not ask for the replacement of the same profile within <strong><span class="out_noticeDays">08 Days</span></strong> from the date of the absorbed candidate’s resignation or the absorbed candidate’s last working date in the case of the absconded candidate.</div>
+        </li>
+        <li class="sub-bullet-item">
+          <span class="sub-bullet-circle">o</span>
+          <div><strong>In case of Late Payment after Due Date, Replacement Clause will not be Applicable.</strong></div>
+        </li>
+      </ul>
+
+      <div class="section-title">5. CANDIDATE PROFILE:</div>
+      <ul class="bullet-list">
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>A candidate once introduced by the company is rejected by the Client once and subsequently appointed on reconsideration within 1 (one) year from the date of the first interview, the client has to pay Company professional charge (considering revised charges). In such cases, the client must inform the company as soon as the selection is made. This condition is also applicable in respect of all candidates if the company gives the client, any candidate’s profile/biodata/resume (along with their contact details/portfolio/practical test/assignment) for the client’s scrutiny.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>If in case the candidate’s profile referred by Company, is already in the existence in the client’s data bank through other resources or is been interviewed previously, the client must inform the concerned consultant of the company <strong>within 2 working days</strong>.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>Although the company will make every effort to screen, assess the skills, and conduct reference checks on each candidate, the company will not be held responsible for or be liable for any acts of dishonesty, negligence, misconduct, or misdeeds on the part of the selected candidate.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>Ensuring that all communication to the candidates sent by Company, till the candidate is selected and joins the Client’s organization, is routed through Company.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>The offer letter, appointment letter, and bond copy to the candidate, including the annual Cost to company details, is to be conveyed through Company.</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- PAGE 3 -->
+    <div class="a4-page" id="page-3">
+      <div class="section-title">6. INTELLECTUAL PROPERTY RIGHTS:</div>
+      <ul class="bullet-list">
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>Moreover, all resumes sent by the company will be kept as the <strong>Company’s property, until the next 12 (twelve) months</strong> from the date of the processed particular resume. The client is requested, NOT TO RECOMMEND NON-SELECTED CANDIDATES to any third party. If recommended, they should be directly informed by the Client. As a pioneer in hunting the candidate, the company is meant for taking the professional charges for the particular candidate from the client.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>However, a third-party transfer may be allowed, if the client pays the placement charges as aforementioned charges.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>Client hereby grants permission to company and limited license to use and reproduce client’s logo(s) ("Logo") in whole or in part on its associated World Wide Web site, <strong>www.rkhrm.com</strong> ("RKHRM’s Website") or third-party hosted websites ("Site(s)"), social media sites administered by RKHRM (“Facebook, LinkedIn, Twitter, Blogs”) or in other official Company’s printed publications without further consideration.</div>
+        </li>
+      </ul>
+
+      <div class="section-title">7. AMENDMENT & ASSIGNABILITY:</div>
+      <ul class="bullet-list">
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>This Agreement represents the complete understanding of the parties concerning the subject matter and supersedes all prior proposals, agreements, representations, and understandings.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>Neither Client shall transfer nor assign this Agreement to any other person or entity, whether by operation of law or by choice, without the prior written consent of Company. The terms of this Agreement shall be binding on and inure to the benefit of each party and such party’s respective heirs, legal representatives, successors, and assigns.</div>
+        </li>
+      </ul>
+
+      <div class="section-title">8. GOVERNING LAW:</div>
+      <ul class="bullet-list">
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>In case of any disputes of this agreement, Ahmedabad jurisdiction will be the final authority.</div>
+        </li>
+        <li class="bullet-item">
+          <span class="bullet-arrow">➢</span>
+          <div>The Parties have read this Agreement, understand it, and agree to it. By signing below, each individual warrants that he or she has full power and authority to bind his or her Party to this Agreement.</div>
+        </li>
+      </ul>
+
+      <div class="clause-text" style="margin-top: 6px;">
+        I, on behalf of the company request the client, to please go through this letter and return the duly signed copy entailing the acknowledgment and acceptance of the company’s offer. Assuring clients of our best services & attention at all times.
+      </div>
+
+      <div class="sign-section">
+        <div>Sincerely yours,</div>
+        <div class="sign-grid">
+          <div class="sign-col">
+            <div class="sign-line">RK HR Management Private Limited</div>
+            <div class="stamp-container">
+              <img id="stamp-img" src="image002.png" alt="Stamp" class="stamp-img" />
+            </div>
+            <div class="sign-meta">Authorized Signatory & Company Seal</div>
+            <div class="sign-line">Name of Person: Mr. Prakash Bajaji</div>
+            <div class="sign-line">Designation: Founder & CEO</div>
+            <div class="sign-meta">Place: Ahmedabad</div>
+            <div class="sign-meta">Date: <span class="out_effDate">02/Sep/2026</span></div>
+          </div>
+
+          <div class="sign-col">
+            <div class="sign-line out_clientName">INTERCERT INC</div>
+            <div class="stamp-container"></div>
+            <div class="sign-meta">Authorized Signatory & Company Seal</div>
+            <div class="sign-line">Name of Person: <span id="out_clientRep">Mr. Prashant Kolambekar</span></div>
+            <div class="sign-line">Designation: <span id="out_clientDesig">Head of Sales</span></div>
+            <div class="sign-meta">Place: <span id="out_clientPlace">Bengaluru</span></div>
+            <div class="sign-meta">Date: <span class="out_effDate">02/Sep/2026</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Live Binding Function
+    function bindInput(inputId, outputClassOrId, isClass = false) {
+      const input = document.getElementById(inputId);
+      input.addEventListener('input', () => {
+        if (isClass) {
+          document.querySelectorAll('.' + outputClassOrId).forEach(el => el.textContent = input.value);
+        } else {
+          const el = document.getElementById(outputClassOrId);
+          if (el) el.textContent = input.value;
+        }
+      });
+    }
+
+    // Bind all inputs
+    bindInput('inp_effDate', 'out_effDate', true);
+    bindInput('inp_effDay', 'out_effDay', true);
+    bindInput('inp_clientName', 'out_clientName', true);
+    bindInput('inp_clientAddress', 'out_clientAddress', true);
+    bindInput('inp_payDays', 'out_payDays', true);
+    bindInput('inp_repDays', 'out_repDays', true);
+    bindInput('inp_noticeDays', 'out_noticeDays', true);
+    bindInput('inp_clientRep', 'out_clientRep', false);
+    bindInput('inp_clientDesig', 'out_clientDesig', false);
+    bindInput('inp_clientPlace', 'out_clientPlace', false);
+
+    // Toggle Company Stamp
+    document.getElementById('inp_showStamp').addEventListener('change', function() {
+      document.getElementById('stamp-img').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Reset Defaults
+    function resetDefaults() {
+      if (confirm("Reset all fields to default values?")) {
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>
