@@ -10,8 +10,8 @@
       --accent-color: #0284c7;
       --border-color: #d1d5db;
       --bg-gray: #f8fafc;
-      --top-margin: 34mm; /* Perfectly sits right below the header line */
-      --bottom-margin: 20mm; /* Finishes cleanly right above the footer bar */
+      --top-margin: 32mm; /* Perfectly hugs the bottom of the letterhead header bar */
+      --bottom-margin: 20mm;
     }
 
     * {
@@ -244,7 +244,7 @@
       margin-left: 2px;
     }
 
-    /* EXACT A4 PAGE STRUCTURE - PROPORTIONALLY BALANCED */
+    /* A4 PAGE LAYOUT */
     .a4-page {
       width: 210mm;
       min-height: 297mm;
@@ -265,37 +265,43 @@
       justify-content: flex-start;
     }
 
+    /* TIGHT & CLEAN DOCUMENT HEADER (NO EXTRA GAPS) */
     .doc-header-row {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       font-weight: bold;
-      margin-bottom: 10px;
-      font-size: 10pt;
+      margin-top: 0;
+      margin-bottom: 6px;
+      font-size: 9.8pt;
+      line-height: 1.2;
     }
 
     .doc-title-box {
       text-align: center;
-      margin-bottom: 12px;
+      margin-top: 2px;
+      margin-bottom: 8px;
     }
 
     .doc-title-box h3 {
-      font-size: 10.5pt;
+      font-size: 10.2pt;
       font-weight: bold;
       text-decoration: underline;
-      margin-bottom: 2px;
+      margin: 0;
+      line-height: 1.25;
     }
 
     .parties-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 10px;
+      margin-top: 2px;
+      margin-bottom: 8px;
       font-size: 9.6pt;
     }
 
     .parties-table td {
       vertical-align: top;
-      padding: 2px 0;
+      padding: 1.5px 0;
     }
 
     .parties-table .label {
@@ -318,7 +324,7 @@
 
     .clause-text {
       text-align: justify;
-      margin-bottom: 8px;
+      margin-bottom: 7px;
       font-size: 9.5pt;
       line-height: 1.28;
     }
@@ -416,7 +422,7 @@
       margin-bottom: 1px;
     }
 
-    /* STRICT MULTI-PAGE PRINT STYLES */
+    /* PRINT STYLES */
     @media print {
       html, body {
         display: block !important;
@@ -495,9 +501,9 @@
       <div class="form-section" style="background: #e0f2fe; border-color: #bae6fd;">
         <h3>⚙️ Header Spacing Fine-Tuning</h3>
         <div class="form-group">
-          <label>Top Clearance: <strong id="lbl_margin">34mm</strong></label>
+          <label>Top Clearance: <strong id="lbl_margin">32mm</strong></label>
           <div class="slider-row">
-            <input type="range" id="inp_topMargin" min="28" max="46" value="34" step="1" />
+            <input type="range" id="inp_topMargin" min="26" max="42" value="32" step="1" />
           </div>
         </div>
       </div>
@@ -628,7 +634,7 @@
     </div>
   </div>
 
-  <!-- RIGHT DOCUMENT PREVIEW (ALL 3 PAGES FILL PROPORTIONATELY) -->
+  <!-- RIGHT DOCUMENT PREVIEW -->
   <div class="preview-wrapper">
 
     <!-- PAGE 1 OF 3 -->
@@ -895,7 +901,7 @@
       });
     }
 
-    // Top Clearance Slider (Default is 34mm)
+    // Top Clearance Slider
     const marginSlider = document.getElementById('inp_topMargin');
     const marginLabel = document.getElementById('lbl_margin');
     marginSlider.addEventListener('input', () => {
