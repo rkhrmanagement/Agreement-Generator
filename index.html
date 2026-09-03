@@ -12,7 +12,7 @@
       --bg-gray: #f8fafc;
       --top-margin: 33mm;
       --bottom-margin: 22mm;
-      --doc-font-size: 9.6pt;
+      --doc-font-size: 10.8pt; /* Set to 10.8pt as requested */
     }
 
     * {
@@ -244,11 +244,10 @@
       margin-left: 2px;
     }
 
-    /* EXACT A4 PAGE STRUCTURE */
+    /* A4 PAGE STRUCTURE */
     .a4-page {
       width: 210mm;
       min-height: 297mm;
-      height: 297mm;
       background-color: #ffffff;
       background-image: url('image001.jpg');
       background-size: 210mm 297mm;
@@ -271,7 +270,7 @@
       align-items: baseline;
       font-weight: bold;
       margin-bottom: 6px;
-      font-size: 9.8pt;
+      font-size: 1.02em;
       line-height: 1.2;
     }
 
@@ -282,7 +281,7 @@
     }
 
     .doc-title-box h3 {
-      font-size: 10.2pt;
+      font-size: 1.05em;
       font-weight: bold;
       text-decoration: underline;
       margin: 0;
@@ -330,7 +329,7 @@
     .section-title {
       font-weight: bold;
       text-decoration: underline;
-      font-size: 9.8pt;
+      font-size: 1.02em;
       margin-top: 5px;
       margin-bottom: 3px;
       display: block;
@@ -377,7 +376,7 @@
 
     .sub-bullet-circle {
       margin-right: 6px;
-      font-size: 8pt;
+      font-size: 0.85em;
       flex-shrink: 0;
     }
 
@@ -421,7 +420,7 @@
       margin-bottom: 1px;
     }
 
-    /* STRICT MULTI-PAGE PRINT ENGINE */
+    /* PRINT STYLES */
     @media print {
       html, body {
         display: block !important;
@@ -461,9 +460,7 @@
         box-shadow: none !important;
         margin: 0 !important;
         width: 210mm !important;
-        height: 297mm !important;
         min-height: 297mm !important;
-        max-height: 297mm !important;
         page-break-after: always !important;
         break-after: page !important;
         page-break-inside: avoid !important;
@@ -496,19 +493,20 @@
 
     <div class="form-container">
       
-      <!-- CALIBRATION & FIT CONTROLS -->
+      <!-- FONT SCALE SLIDER & DIRECT INPUT (UP TO 100PT) -->
       <div class="form-section" style="background: #e0f2fe; border-color: #bae6fd;">
-        <h3>⚙️ Spacing & Fit Controls</h3>
+        <h3>⚙️ Spacing & Font Scale (Up to 100pt)</h3>
         <div class="form-group">
           <label>Top Clearance: <strong id="lbl_margin">33mm</strong></label>
           <div class="slider-row">
-            <input type="range" id="inp_topMargin" min="26" max="42" value="33" step="1" />
+            <input type="range" id="inp_topMargin" min="20" max="60" value="33" step="1" />
           </div>
         </div>
-        <div class="form-group" style="margin-top: 6px;">
-          <label>Font Scale: <strong id="lbl_fontSize">9.6pt</strong></label>
+        <div class="form-group" style="margin-top: 8px;">
+          <label>Font Scale: <strong id="lbl_fontSize">10.8pt</strong></label>
           <div class="slider-row">
-            <input type="range" id="inp_fontSize" min="8.4" max="10.8" value="9.6" step="0.1" />
+            <input type="range" id="inp_fontSize" min="6" max="100" value="10.8" step="0.1" />
+            <input type="number" id="inp_fontSize_num" class="form-control" style="width: 70px; padding: 4px 6px;" min="6" max="100" step="0.1" value="10.8" />
           </div>
         </div>
       </div>
@@ -639,7 +637,7 @@
     </div>
   </div>
 
-  <!-- RIGHT DOCUMENT PREVIEW (ALL 3 PAGES ACTIVE) -->
+  <!-- RIGHT DOCUMENT PREVIEW (ALL 3 PAGES) -->
   <div class="preview-wrapper" id="previewContainer">
 
     <!-- PAGE 1 OF 3 -->
@@ -915,14 +913,21 @@
       marginLabel.textContent = val;
     });
 
-    // Font Scale Slider
+    // Font Scale Slider + Direct Number Input (Ranges up to 100pt)
     const fontSlider = document.getElementById('inp_fontSize');
+    const fontNumInput = document.getElementById('inp_fontSize_num');
     const fontLabel = document.getElementById('lbl_fontSize');
-    fontSlider.addEventListener('input', () => {
-      const val = fontSlider.value + 'pt';
-      document.documentElement.style.setProperty('--doc-font-size', val);
-      fontLabel.textContent = val;
-    });
+
+    function updateFontSize(val) {
+      const formattedVal = parseFloat(val).toFixed(1) + 'pt';
+      document.documentElement.style.setProperty('--doc-font-size', formattedVal);
+      fontLabel.textContent = formattedVal;
+      fontSlider.value = val;
+      fontNumInput.value = val;
+    }
+
+    fontSlider.addEventListener('input', (e) => updateFontSize(e.target.value));
+    fontNumInput.addEventListener('input', (e) => updateFontSize(e.target.value));
 
     // Dates & Client Info
     bindInput('inp_effDate', 'out_effDate', true);
