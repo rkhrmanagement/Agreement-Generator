@@ -12,7 +12,7 @@
       --bg-gray: #f8fafc;
       --top-margin: 37mm;
       --bottom-margin: 22mm;
-      --doc-font-size: 11.4pt; /* Set to 11.4pt as requested */
+      --doc-font-size: 11.3pt; /* Set to 11.3pt as requested */
     }
 
     * {
@@ -503,10 +503,10 @@
           </div>
         </div>
         <div class="form-group" style="margin-top: 8px;">
-          <label>Font Scale: <strong id="lbl_fontSize">11.4pt</strong></label>
+          <label>Font Scale: <strong id="lbl_fontSize">11.3pt</strong></label>
           <div class="slider-row">
-            <input type="range" id="inp_fontSize" min="6" max="100" value="11.4" step="0.1" />
-            <input type="number" id="inp_fontSize_num" class="form-control" style="width: 70px; padding: 4px 6px;" min="6" max="100" step="0.1" value="11.4" />
+            <input type="range" id="inp_fontSize" min="6" max="100" value="11.3" step="0.1" />
+            <input type="number" id="inp_fontSize_num" class="form-control" style="width: 70px; padding: 4px 6px;" min="6" max="100" step="0.1" value="11.3" />
           </div>
         </div>
       </div>
@@ -972,6 +972,18 @@
     document.getElementById('btn_calendar').addEventListener('click', () => {
       if (effPicker.showPicker) { effPicker.showPicker(); } else { effPicker.focus(); effPicker.click(); }
     });
+
+    // Default Effective Date = today's date in IST (Asia/Kolkata)
+    (function setTodayIST() {
+      try {
+        const parts = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric'
+        }).formatToParts(new Date());
+        const get = t => parts.find(p => p.type === t).value;
+        effDateInput.value = get('day') + '-' + get('month') + '-' + get('year');
+        applyEffDate(effDateInput.value);
+      } catch (e) { /* keep fallback default */ }
+    })();
     bindInput('inp_effDay', 'out_effDay', true);
     bindInput('inp_clientName', 'out_clientName', true);
     bindInput('inp_clientAddress', 'out_clientAddress', true);
