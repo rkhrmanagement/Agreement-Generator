@@ -10,9 +10,9 @@
       --accent-color: #0284c7;
       --border-color: #d1d5db;
       --bg-gray: #f8fafc;
-      --top-margin: 33mm;
+      --top-margin: 37mm;
       --bottom-margin: 22mm;
-      --doc-font-size: 10.8pt; /* Set to 10.8pt as requested */
+      --doc-font-size: 11.4pt; /* Set to 11.4pt as requested */
     }
 
     * {
@@ -497,16 +497,16 @@
       <div class="form-section" style="background: #e0f2fe; border-color: #bae6fd;">
         <h3>⚙️ Spacing & Font Scale (Up to 100pt)</h3>
         <div class="form-group">
-          <label>Top Clearance: <strong id="lbl_margin">33mm</strong></label>
+          <label>Top Clearance: <strong id="lbl_margin">37mm</strong></label>
           <div class="slider-row">
-            <input type="range" id="inp_topMargin" min="20" max="60" value="33" step="1" />
+            <input type="range" id="inp_topMargin" min="20" max="60" value="37" step="1" />
           </div>
         </div>
         <div class="form-group" style="margin-top: 8px;">
-          <label>Font Scale: <strong id="lbl_fontSize">10.8pt</strong></label>
+          <label>Font Scale: <strong id="lbl_fontSize">11.4pt</strong></label>
           <div class="slider-row">
-            <input type="range" id="inp_fontSize" min="6" max="100" value="10.8" step="0.1" />
-            <input type="number" id="inp_fontSize_num" class="form-control" style="width: 70px; padding: 4px 6px;" min="6" max="100" step="0.1" value="10.8" />
+            <input type="range" id="inp_fontSize" min="6" max="100" value="11.4" step="0.1" />
+            <input type="number" id="inp_fontSize_num" class="form-control" style="width: 70px; padding: 4px 6px;" min="6" max="100" step="0.1" value="11.4" />
           </div>
         </div>
       </div>
@@ -517,7 +517,11 @@
         <div class="row">
           <div class="col form-group">
             <label>Effective Date</label>
-            <input type="text" id="inp_effDate" class="form-control" value="03/Sep/2026" />
+            <div style="display:flex; gap:4px; position:relative;">
+              <input type="text" id="inp_effDate" class="form-control" value="03-09-2026" placeholder="dd-mm-yyyy" />
+              <button type="button" id="btn_calendar" class="btn btn-secondary" style="flex:0 0 36px; padding:0; font-size:14px;" title="Pick from calendar">📅</button>
+              <input type="date" id="inp_effDate_picker" value="2026-09-03" tabindex="-1" style="position:absolute; right:0; bottom:0; width:1px; height:1px; opacity:0; pointer-events:none;" />
+            </div>
           </div>
           <div class="col form-group">
             <label>Day of Week</label>
@@ -768,7 +772,7 @@
         <ul class="sub-bullet-list">
           <li class="sub-bullet-item">
             <span class="sub-bullet-circle">o</span>
-            <div class="bullet-content">If the client terminates the candidate within the guaranteed period then the company has to provide the replacement. However, the client will pay <span class="out_termFee">50 %</span> of the service charge for replacement <strong>except in case of misbehaviour, fraud or dishonesty.</strong></div>
+            <div class="bullet-content">If the client terminates the candidate within the guaranteed period then the company has to provide the replacement. However, the client will pay <span class="out_termFee">50 %</span> of the service charge for replacement <strong>except in case of misbehaviour, fraud or dishonesty,</strong> The remaining <span class="out_termFeeRem">50%</span> charge will be adjusted in the next invoice raised and shared with the client.</div>
           </li>
           <li class="sub-bullet-item">
             <span class="sub-bullet-circle">o</span>
@@ -930,7 +934,44 @@
     fontNumInput.addEventListener('input', (e) => updateFontSize(e.target.value));
 
     // Dates & Client Info
-    bindInput('inp_effDate', 'out_effDate', true);
+    // Effective Date (dd-mm-yyyy or calendar) -> auto-picks the day of week
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const effDateInput = document.getElementById('inp_effDate');
+    const effDayInput = document.getElementById('inp_effDay');
+    const effPicker = document.getElementById('inp_effDate_picker');
+
+    function setOut(cls, val) {
+      document.querySelectorAll('.' + cls).forEach(el => el.textContent = val);
+    }
+
+    function applyEffDate(raw) {
+      const m = raw.trim().match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
+      if (m) {
+        const d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+        const dt = new Date(y, mo - 1, d);
+        if (dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d) {
+          const dayName = DAYS[dt.getDay()];
+          setOut('out_effDate', String(d).padStart(2, '0') + '/' + MONTHS[mo - 1] + '/' + y);
+          setOut('out_effDay', dayName);
+          effDayInput.value = dayName;
+          effPicker.value = y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+          return;
+        }
+      }
+      setOut('out_effDate', raw);
+    }
+
+    effDateInput.addEventListener('input', () => applyEffDate(effDateInput.value));
+    effPicker.addEventListener('change', () => {
+      if (!effPicker.value) return;
+      const [y, mo, d] = effPicker.value.split('-');
+      effDateInput.value = d + '-' + mo + '-' + y;
+      applyEffDate(effDateInput.value);
+    });
+    document.getElementById('btn_calendar').addEventListener('click', () => {
+      if (effPicker.showPicker) { effPicker.showPicker(); } else { effPicker.focus(); effPicker.click(); }
+    });
     bindInput('inp_effDay', 'out_effDay', true);
     bindInput('inp_clientName', 'out_clientName', true);
     bindInput('inp_clientAddress', 'out_clientAddress', true);
@@ -950,6 +991,12 @@
     bindInput('inp_repDays', 'out_repDays', true);
     bindInput('inp_noticeDays', 'out_noticeDays', true);
     bindInput('inp_termFee', 'out_termFee', true);
+    document.getElementById('inp_termFee').addEventListener('input', function() {
+      const n = parseFloat(this.value);
+      if (!isNaN(n) && n >= 0 && n <= 100) {
+        setOut('out_termFeeRem', (Math.round((100 - n) * 100) / 100) + '%');
+      }
+    });
     bindInput('inp_scrutinyDays', 'out_scrutinyDays', true);
     bindInput('inp_jurisdiction', 'out_jurisdiction', true);
 
