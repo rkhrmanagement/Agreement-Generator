@@ -535,11 +535,11 @@
         <h3>2. Client Information</h3>
         <div class="form-group">
           <label>Client Company Name</label>
-          <input type="text" id="inp_clientName" class="form-control" value="Intercert Pvt Ltd" />
+          <input type="text" id="inp_clientName" class="form-control" value="" />
         </div>
         <div class="form-group">
           <label>Client Registered Address</label>
-          <textarea id="inp_clientAddress" class="form-control">2nd Floor, Hustlehub Tech Park Building, H 210, ITI Layout, Techpark, HSR Layout, Bengaluru, Karnataka 560102</textarea>
+          <textarea id="inp_clientAddress" class="form-control"></textarea>
         </div>
       </div>
 
@@ -582,7 +582,7 @@
         <div class="row">
           <div class="col form-group">
             <label>Payment Window</label>
-            <input type="text" id="inp_payDays" class="form-control" value="30 Days" />
+            <input type="text" id="inp_payDays" class="form-control" value="8 Days" />
           </div>
           <div class="col form-group">
             <label>Replacement Period</label>
@@ -616,16 +616,16 @@
         <h3>5. Signatories</h3>
         <div class="form-group">
           <label>Client Signatory Name</label>
-          <input type="text" id="inp_clientRep" class="form-control" value="Mr. Prashant Kolambekar" />
+          <input type="text" id="inp_clientRep" class="form-control" value="" />
         </div>
         <div class="row">
           <div class="col form-group">
             <label>Designation</label>
-            <input type="text" id="inp_clientDesig" class="form-control" value="Head of Sales and Marketing" />
+            <input type="text" id="inp_clientDesig" class="form-control" value="" />
           </div>
           <div class="col form-group">
             <label>Place</label>
-            <input type="text" id="inp_clientPlace" class="form-control" value="Bengaluru" />
+            <input type="text" id="inp_clientPlace" class="form-control" value="" />
           </div>
         </div>
         <div class="form-group" style="margin-top: 6px;">
@@ -673,8 +673,8 @@
           <div class="party-row">
             <div class="party-label">CLIENT</div>
             <div class="party-details">
-              <strong class="out_clientName">Intercert Pvt Ltd</strong><br>
-              A company incorporated in India Located <span class="out_clientAddress">2nd Floor, Hustlehub Tech Park Building, H 210, ITI Layout, Techpark, HSR Layout, Bengaluru, Karnataka 560102</span><br>
+              <strong class="out_clientName"></strong><br>
+              A company incorporated in India Located <span class="out_clientAddress"></span><br>
               Hereinafter referred to as “<strong>Client</strong>” of the other part, and together with “Company”, the “<strong>Parties</strong>,” and each of CLIENT and COMPANY, a “<strong>Party</strong>”)
             </div>
           </div>
@@ -745,7 +745,7 @@
         <ul class="bullet-list">
           <li class="bullet-item">
             <span class="bullet-arrow">➢</span>
-            <div class="bullet-content">The client has to disburse to the company for invoice payment within <strong><span class="out_payDays">30 Days</span></strong> from the date of the candidate’s reporting (joining) in the client’s organization.</div>
+            <div class="bullet-content">The client has to disburse to the company for invoice payment within <strong><span class="out_payDays">8 Days</span></strong> from the date of the candidate’s reporting (joining) in the client’s organization.</div>
           </li>
           <li class="bullet-item">
             <span class="bullet-arrow">➢</span>
@@ -874,12 +874,12 @@
             </div>
 
             <div class="sign-col">
-              <div class="sign-line out_clientName">Intercert Pvt Ltd</div>
+              <div class="sign-line out_clientName"></div>
               <div class="stamp-container"></div>
               <div class="sign-meta">Authorized Signatory & Company Seal</div>
-              <div class="sign-line">Name of Person: <span id="out_clientRep">Mr. Prashant Kolambekar</span></div>
-              <div class="sign-line">Designation: <span id="out_clientDesig">Head of Sales and Marketing</span></div>
-              <div class="sign-meta">Place: <span id="out_clientPlace">Bengaluru</span></div>
+              <div class="sign-line">Name of Person: <span id="out_clientRep"></span></div>
+              <div class="sign-line">Designation: <span id="out_clientDesig"></span></div>
+              <div class="sign-meta">Place: <span id="out_clientPlace"></span></div>
               <div class="sign-meta">Date: <span class="out_effDate">03/Sep/2026</span></div>
             </div>
           </div>
@@ -988,6 +988,15 @@
     bindInput('inp_clientName', 'out_clientName', true);
     bindInput('inp_clientAddress', 'out_clientAddress', true);
 
+    // Page title = client name only (used as the PDF file name when saving)
+    const originalTitle = document.title;
+    const clientNameInput = document.getElementById('inp_clientName');
+    function updateTitle() {
+      document.title = clientNameInput.value.trim() || originalTitle;
+    }
+    clientNameInput.addEventListener('input', updateTitle);
+    updateTitle();
+
     // Slabs & Charges
     bindInput('inp_slab1_pct', 'out_slab1_pct', true);
     bindInput('inp_slab1_desc', 'out_slab1_desc', true);
@@ -997,6 +1006,34 @@
     bindInput('inp_slab3_desc', 'out_slab3_desc', true);
     bindInput('inp_slab4_pct', 'out_slab4_pct', true);
     bindInput('inp_slab4_desc', 'out_slab4_desc', true);
+
+    // Slab auto-update: changing the Slab 1 limit shifts Slab 2's start,
+    // and changing Slab 2's upper limit shifts Slab 3's start
+    function setSlabText(inputId, outClass, text) {
+      document.getElementById(inputId).value = text;
+      setOut(outClass, text);
+    }
+    function slab2End() {
+      const m = document.getElementById('inp_slab2_desc').value.match(/-\s*([\d.]+)/);
+      return m ? parseFloat(m[1]) : 50.0;
+    }
+    document.getElementById('inp_slab1_desc').addEventListener('input', function() {
+      const m = this.value.match(/up\s*to\s*([\d.]+)/i);
+      if (!m) return;
+      const x = parseFloat(m[1]);
+      const end = slab2End();
+      if (isNaN(x) || x <= 0 || x >= end) return;
+      const start = (Math.round((x + 0.01) * 100) / 100).toFixed(2);
+      setSlabText('inp_slab2_desc', 'out_slab2_desc', 'CTC between ' + start + '-' + end.toFixed(1) + ' Lakh Per Annum');
+    });
+    document.getElementById('inp_slab2_desc').addEventListener('input', function() {
+      const m = this.value.match(/-\s*([\d.]+)/);
+      if (!m) return;
+      const end = parseFloat(m[1]);
+      if (isNaN(end) || end <= 0) return;
+      const start3 = (Math.round((end + 0.1) * 10) / 10).toFixed(1);
+      setSlabText('inp_slab3_desc', 'out_slab3_desc', 'CTC between ' + start3 + ' and above');
+    });
 
     // Terms & Conditions
     bindInput('inp_payDays', 'out_payDays', true);
