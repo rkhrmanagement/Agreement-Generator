@@ -420,8 +420,30 @@
       margin-bottom: 1px;
     }
 
+    /* ON-PAGE EDITING (screen only) */
+    [contenteditable="true"]:focus {
+      outline: 1px dashed #0284c7;
+      outline-offset: 1px;
+      background: rgba(2,132,199,0.05);
+    }
+    .edit-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .edit-tools .btn {
+      flex: 1 1 45%;
+      padding: 6px 4px;
+      font-size: 11.5px;
+    }
+
     /* PRINT STYLES */
     @media print {
+      [contenteditable] {
+        outline: none !important;
+        background: none !important;
+      }
       html, body {
         display: block !important;
         height: auto !important;
@@ -503,11 +525,35 @@
           </div>
         </div>
         <div class="form-group" style="margin-top: 8px;">
+          <label>Bottom Clearance: <strong id="lbl_bmargin">22mm</strong></label>
+          <div class="slider-row">
+            <input type="range" id="inp_bottomMargin" min="10" max="60" value="22" step="1" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 8px;">
           <label>Font Scale: <strong id="lbl_fontSize">11.2pt</strong></label>
           <div class="slider-row">
             <input type="range" id="inp_fontSize" min="6" max="100" value="11.2" step="0.1" />
             <input type="number" id="inp_fontSize_num" class="form-control" style="width: 70px; padding: 4px 6px;" min="6" max="100" step="0.1" value="11.2" />
           </div>
+        </div>
+      </div>
+
+      <!-- ON-PAGE EDITING -->
+      <div class="form-section" style="background: #ecfdf5; border-color: #a7f3d0;">
+        <h3>✏️ Edit Document On Page</h3>
+        <div class="form-group">
+          <label><input type="checkbox" id="inp_editDoc" checked /> Click any text in the preview to edit it</label>
+        </div>
+        <div class="edit-tools">
+          <button type="button" class="btn btn-secondary" data-add="bullet">➢ Add Pointer</button>
+          <button type="button" class="btn btn-secondary" data-add="sub">o Add Sub-pointer</button>
+          <button type="button" class="btn btn-secondary" data-add="heading">Add Heading</button>
+          <button type="button" class="btn btn-secondary" data-add="para">Add Paragraph</button>
+          <button type="button" class="btn btn-secondary" data-add="remove" style="flex-basis:100%;">🗑 Remove This Block</button>
+        </div>
+        <div style="font-size:10.5px; color:#475569; margin-top:6px; line-height:1.4;">
+          Enter = new pointer in the same format. Backspace on an empty pointer removes it. Text that no longer fits moves to the next page automatically.
         </div>
       </div>
 
@@ -637,7 +683,7 @@
 
     <div class="actions">
       <button class="btn btn-secondary" onclick="location.reload()">Reset</button>
-      <button class="btn btn-primary" onclick="window.print()">🖨️ Print / Save All 3 Pages</button>
+      <button class="btn btn-primary" id="btn_print" onclick="window.print()">🖨️ Print / Save All 3 Pages</button>
     </div>
   </div>
 
@@ -674,7 +720,7 @@
             <div class="party-label">CLIENT</div>
             <div class="party-details">
               <strong class="out_clientName"></strong><br>
-              A company incorporated in India Located <span class="out_clientAddress"></span><br>
+              A company incorporated address Located at <span class="out_clientAddress"></span><br>
               Hereinafter referred to as “<strong>Client</strong>” of the other part, and together with “Company”, the “<strong>Parties</strong>,” and each of CLIENT and COMPANY, a “<strong>Party</strong>”)
             </div>
           </div>
@@ -1058,6 +1104,354 @@
     document.getElementById('inp_showStamp').addEventListener('change', function() {
       document.getElementById('stamp-img').style.display = this.checked ? 'block' : 'none';
     });
+
+    // Bottom Clearance Slider
+    const bMarginSlider = document.getElementById('inp_bottomMargin');
+    bMarginSlider.addEventListener('input', () => {
+      const val = bMarginSlider.value + 'mm';
+      document.documentElement.style.setProperty('--bottom-margin', val);
+      document.getElementById('lbl_bmargin').textContent = val;
+    });
+
+    // ===== ON-PAGE EDITING + AUTOMATIC PAGE FLOW =====
+    (function() {
+      const container = document.getElementById('previewContainer');
+      const EDIT_SEL = '.bullet-content, .clause-text, .section-title, .party-details, .doc-header-row > div, .doc-title-box h3, .and-separator, .sign-line, .sign-meta, .sign-section > div:first-child';
+      let editing = true;
+
+      function markEditable(root) {
+        const list = (root.matches && root.matches(EDIT_SEL)) ? [root] : [];
+        root.querySelectorAll(EDIT_SEL).forEach(el => list.push(el));
+        list.forEach(el => {
+          if (editing) el.setAttribute('contenteditable', 'true'); else el.removeAttribute('contenteditable');
+          el.setAttribute('spellcheck', 'false');
+        });
+      }
+
+      const LIST_CLASS = li => li.classList.contains('sub-bullet-item') ? 'sub-bullet-list' : 'bullet-list';
+
+      // A "unit" = one block that can sit on a page: a list item or any other top-level block
+      function collectUnits() {
+        const units = [];
+        container.querySelectorAll('.a4-page').forEach(page => {
+          Array.from(page.children).forEach(ch => {
+            if (ch.tagName === 'UL') Array.from(ch.children).forEach(li => units.push(li));
+            else units.push(ch);
+          });
+        });
+        return units;
+      }
+
+      // Every unit remembers the page it originally belongs to (data-pg)
+      function initGroups() {
+        container.querySelectorAll('.a4-page').forEach((page, g) => {
+          Array.from(page.children).forEach(ch => {
+            if (ch.tagName === 'UL') Array.from(ch.children).forEach(li => li.dataset.pg = g);
+            else ch.dataset.pg = g;
+          });
+        });
+      }
+
+      function stripClone(el) {
+        el.removeAttribute('id');
+        el.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+      }
+
+      // Decide which units go on which page by measuring them in a hidden A4 page
+      function plan() {
+        const units = collectUnits();
+        const groups = new Map();
+        units.forEach(u => {
+          const g = parseInt(u.dataset.pg, 10) || 0;
+          if (!groups.has(g)) groups.set(g, []);
+          groups.get(g).push(u);
+        });
+        const keys = Array.from(groups.keys()).sort((a, b) => a - b);
+
+        const probe = document.createElement('div');
+        probe.style.cssText = 'height:297mm;position:absolute;visibility:hidden;';
+        document.body.appendChild(probe);
+        const a4 = probe.getBoundingClientRect().height;
+        probe.remove();
+
+        const box = document.createElement('div');
+        box.style.cssText = 'position:absolute;left:-10000px;top:0;visibility:hidden;pointer-events:none;';
+        const sp = document.createElement('div');
+        sp.className = 'a4-page';
+        sp.style.backgroundImage = 'none';
+        box.appendChild(sp);
+        document.body.appendChild(box);
+        const padBottom = parseFloat(getComputedStyle(sp).paddingBottom) || 0;
+
+        const overflows = () => {
+          const last = sp.lastElementChild;
+          if (!last) return false;
+          const mb = parseFloat(getComputedStyle(last).marginBottom) || 0;
+          return last.getBoundingClientRect().bottom + mb > sp.getBoundingClientRect().top + a4 - padBottom;
+        };
+        function add(u) {
+          const c = u.cloneNode(true);
+          stripClone(c);
+          if (u.tagName === 'LI') {
+            const cls = LIST_CLASS(u);
+            let ul = sp.lastElementChild;
+            if (!ul || ul.tagName !== 'UL' || ul.className !== cls) {
+              ul = document.createElement('ul');
+              ul.className = cls;
+              sp.appendChild(ul);
+            }
+            ul.appendChild(c);
+          } else {
+            sp.appendChild(c);
+          }
+        }
+        function fill(queue) {
+          sp.innerHTML = '';
+          let n = 0;
+          for (; n < queue.length; n++) {
+            add(queue[n]);
+            if (n > 0 && overflows()) break;
+          }
+          if (n < queue.length) {
+            // never leave a heading alone at the bottom of a page
+            while (n > 1 && queue[n - 1].classList.contains('section-title')) n--;
+          }
+          return { placed: queue.slice(0, n), rest: queue.slice(n) };
+        }
+
+        const pages = [];
+        let carry = [];
+        keys.forEach(g => {
+          const r = fill(carry.concat(groups.get(g)));
+          pages.push(r.placed);
+          carry = r.rest;
+        });
+        while (carry.length) {
+          const r = fill(carry);
+          pages.push(r.placed);
+          carry = r.rest;
+        }
+        box.remove();
+        return pages;
+      }
+
+      function makeWrapper() {
+        const w = document.createElement('div');
+        w.className = 'page-wrapper';
+        w.innerHTML = '<div class="page-badge"></div><div class="a4-page"></div>';
+        return w;
+      }
+
+      function apply(pages) {
+        const wrappers = Array.from(container.querySelectorAll(':scope > .page-wrapper'));
+        while (wrappers.length < pages.length) {
+          const w = makeWrapper();
+          container.appendChild(w);
+          wrappers.push(w);
+        }
+        const usedUls = new Set();
+        const wanted = [];
+        pages.forEach((units, i) => {
+          const page = wrappers[i].querySelector('.a4-page');
+          const blocks = [];
+          let k = 0;
+          while (k < units.length) {
+            const u = units[k];
+            if (u.tagName !== 'LI') { blocks.push(u); k++; continue; }
+            const cls = LIST_CLASS(u);
+            const group = [];
+            while (k < units.length && units[k].tagName === 'LI' && LIST_CLASS(units[k]) === cls) group.push(units[k++]);
+            const par = group[0].parentNode;
+            let ul = (par && par.tagName === 'UL' && par.className === cls && !usedUls.has(par)) ? par : null;
+            if (!ul) { ul = document.createElement('ul'); ul.className = cls; }
+            usedUls.add(ul);
+            group.forEach((li, idx) => { if (ul.children[idx] !== li) ul.insertBefore(li, ul.children[idx] || null); });
+            blocks.push(ul);
+          }
+          blocks.forEach((b, idx) => { if (page.children[idx] !== b) page.insertBefore(b, page.children[idx] || null); });
+          wanted.push({ page, count: blocks.length });
+        });
+        // clean-up only after every unit has found its page
+        wanted.forEach(w => { while (w.page.children.length > w.count) w.page.removeChild(w.page.lastChild); });
+        wrappers.slice(pages.length).forEach(w => w.remove());
+
+        const total = pages.length;
+        wrappers.slice(0, total).forEach((w, i) => {
+          w.id = 'page-' + (i + 1) + '-wrapper';
+          w.querySelector('.a4-page').id = 'page-' + (i + 1);
+          w.querySelector('.page-badge').textContent = 'PAGE ' + (i + 1) + ' OF ' + total;
+        });
+        const jumper = document.querySelector('.page-jumper');
+        if (jumper) {
+          jumper.innerHTML = '';
+          for (let i = 1; i <= total; i++) {
+            const b = document.createElement('button');
+            b.textContent = '📄 Page ' + i;
+            b.onclick = () => scrollToPage('page-' + i + '-wrapper');
+            jumper.appendChild(b);
+          }
+        }
+        const printBtn = document.getElementById('btn_print');
+        if (printBtn) printBtn.textContent = '🖨️ Print / Save All ' + total + ' Pages';
+      }
+
+      function repaginate() {
+        const sel = getSelection();
+        const an = sel.anchorNode, ao = sel.anchorOffset;
+        const hadFocus = an && container.contains(an);
+        const st = container.scrollTop;
+        apply(plan());
+        if (hadFocus && an.isConnected && getSelection().anchorNode !== an) {
+          const el = an.nodeType === 1 ? an : an.parentElement;
+          const host = el && el.closest('[contenteditable="true"]');
+          if (host) host.focus({ preventScroll: true });
+          try {
+            const max = an.nodeType === 3 ? an.length : an.childNodes.length;
+            const r = document.createRange();
+            r.setStart(an, Math.min(ao, max));
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
+          } catch (e) { /* ignore */ }
+        }
+        container.scrollTop = st;
+      }
+
+      let timer = null;
+      const schedule = () => { clearTimeout(timer); timer = setTimeout(repaginate, 120); };
+      document.addEventListener('input', schedule);
+      document.addEventListener('change', schedule);
+      window.addEventListener('beforeprint', () => { clearTimeout(timer); repaginate(); });
+
+      // ---------- Editing helpers ----------
+      function hostFromSelection() {
+        const sel = getSelection();
+        if (!sel.rangeCount || !sel.anchorNode) return null;
+        let n = sel.anchorNode;
+        if (n.nodeType !== 1) n = n.parentElement;
+        const h = n && n.closest && n.closest('[contenteditable="true"]');
+        return (h && container.contains(h)) ? h : null;
+      }
+      function unitOf(host) {
+        const li = host.closest('li');
+        if (li) return li;
+        let u = host;
+        while (u.parentElement && !u.parentElement.classList.contains('a4-page')) u = u.parentElement;
+        return u;
+      }
+      function newBlock(kind) {
+        const el = document.createElement(kind === 'bullet' || kind === 'sub' ? 'li' : 'div');
+        if (kind === 'bullet') { el.className = 'bullet-item'; el.innerHTML = '<span class="bullet-arrow">➢</span><div class="bullet-content"></div>'; }
+        else if (kind === 'sub') { el.className = 'sub-bullet-item'; el.innerHTML = '<span class="sub-bullet-circle">o</span><div class="bullet-content"></div>'; }
+        else if (kind === 'heading') { el.className = 'section-title'; }
+        else { el.className = 'clause-text'; }
+        return el;
+      }
+      function hostOf(block) { return block.matches(EDIT_SEL) ? block : block.querySelector('.bullet-content'); }
+      function ensureNotEmpty(el) {
+        if (!el.textContent.length && !el.querySelector('br')) el.appendChild(document.createElement('br'));
+      }
+      function placeCaret(h, atEnd) {
+        const r = document.createRange();
+        r.selectNodeContents(h);
+        r.collapse(!atEnd);
+        const sel = getSelection();
+        sel.removeAllRanges();
+        sel.addRange(r);
+        h.focus({ preventScroll: true });
+      }
+      function addAfter(unit, kind, fragment) {
+        const nb = newBlock(kind);
+        nb.dataset.pg = unit.dataset.pg || 0;
+        const nh = hostOf(nb);
+        if (fragment) nh.appendChild(fragment);
+        ensureNotEmpty(nh);
+        unit.after(nb);
+        markEditable(nb);
+        placeCaret(nh, false);
+        return nb;
+      }
+      function tailAfterCaret(host) {
+        const sel = getSelection();
+        if (!sel.isCollapsed) sel.getRangeAt(0).deleteContents();
+        const r = document.createRange();
+        r.setStart(sel.anchorNode, sel.anchorOffset);
+        r.setEnd(host, host.childNodes.length);
+        const frag = r.extractContents();
+        frag.querySelectorAll('*').forEach(e => {
+          e.removeAttribute('id');
+          const keep = (e.getAttribute('class') || '').split(/\s+/).filter(c => c && !c.startsWith('out_')).join(' ');
+          if (keep) e.setAttribute('class', keep); else e.removeAttribute('class');
+        });
+        return frag;
+      }
+      function removeUnit(unit) {
+        const all = collectUnits();
+        if (all.length < 2) return;
+        const prev = all[all.indexOf(unit) - 1] || all[all.indexOf(unit) + 1];
+        unit.remove();
+        const hs = prev ? prev.querySelectorAll('[contenteditable="true"]') : [];
+        const h = (prev && prev.matches && prev.matches('[contenteditable="true"]')) ? prev : (hs.length ? hs[hs.length - 1] : null);
+        if (h) placeCaret(h, true);
+        schedule();
+      }
+
+      container.addEventListener('keydown', e => {
+        if (!editing) return;
+        const host = hostFromSelection();
+        if (!host) return;
+        const sel = getSelection();
+        if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          const unit = unitOf(host);
+          const isItem = host.classList.contains('bullet-content');
+          const isHeading = host.classList.contains('section-title');
+          const isPara = host.classList.contains('clause-text');
+          if (!(isItem || isHeading || isPara)) { document.execCommand('insertLineBreak'); return; }
+          const kind = isItem ? (unit.classList.contains('sub-bullet-item') ? 'sub' : 'bullet') : (isHeading ? 'bullet' : 'para');
+          const frag = tailAfterCaret(host);
+          ensureNotEmpty(host);
+          addAfter(unit, kind, frag);
+          schedule();
+        } else if (e.key === 'Backspace' && sel.isCollapsed && !host.textContent.trim()) {
+          const isBlock = host.classList.contains('bullet-content') || host.classList.contains('clause-text') || host.classList.contains('section-title');
+          if (isBlock) { e.preventDefault(); removeUnit(unitOf(host)); }
+        }
+      });
+
+      // Paste as plain text so the document format stays intact
+      container.addEventListener('paste', e => {
+        if (!hostFromSelection()) return;
+        e.preventDefault();
+        const t = (e.clipboardData.getData('text/plain') || '').replace(/\s*[\r\n]+\s*/g, ' ');
+        document.execCommand('insertText', false, t);
+      });
+
+      // Sidebar buttons
+      document.querySelectorAll('.edit-tools [data-add]').forEach(btn => {
+        btn.addEventListener('mousedown', e => e.preventDefault());
+        btn.addEventListener('click', () => {
+          const host = hostFromSelection();
+          if (!host) { alert('Click inside the document, where you want it, first.'); return; }
+          const unit = unitOf(host);
+          if (btn.dataset.add === 'remove') { removeUnit(unit); return; }
+          addAfter(unit, btn.dataset.add);
+          schedule();
+        });
+      });
+
+      document.getElementById('inp_editDoc').addEventListener('change', function() {
+        editing = this.checked;
+        container.querySelectorAll('.a4-page').forEach(markEditable);
+      });
+
+      // ---------- Start ----------
+      initGroups();
+      container.querySelectorAll('.a4-page').forEach(markEditable);
+      repaginate();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(repaginate);
+      window.addEventListener('load', repaginate);
+    })();
   </script>
 </body>
 </html>
